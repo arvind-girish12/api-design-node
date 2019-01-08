@@ -18,52 +18,60 @@ var morgan = require('morgan');
 var lions = [];
 var id = 0;
 
-var updateId = function(req, res, next) {
-  // fill this out. this is the route middleware for the ids
+var updateId = function (req, res, next) {
+    id++;
+    req.body.id = id + '';
+    next();
 };
 
 app.use(morgan('dev'))
 app.use(express.static('client'));
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 
-app.param('id', function(req, res, next, id) {
-  // fill this out to find the lion based off the id
-  // and attach it to req.lion. Rember to call next()
+app.param('id', function (req, res, next, id) {
+    var lion = _.find(lions, { id: id });
+    req.lion = lion;
+    next()
 });
 
-app.get('/lions', function(req, res){
-  res.json(lions);
+app.get('/lions', function (req, res) {
+    res.json(lions);
 });
 
-app.get('/lions/:id', function(req, res){
-  // use req.lion
-  res.json(lion || {});
+app.get('/lions/:id', function (req, res) {
+    // use req.lion
+    res.json(lion || {});
 });
 
-app.post('/lions', updateId, function(req, res) {
-  var lion = req.body;
+app.post('/lions', updateId, function (req, res) {
+    var lion = req.body;
 
-  lions.push(lion);
+    lions.push(lion);
 
-  res.json(lion);
+    res.json(lion);
 });
 
 
-app.put('/lions/:id', function(req, res) {
-  var update = req.body;
-  if (update.id) {
-    delete update.id
-  }
+app.put('/lions/:id', function (req, res) {
+    var update = req.body;
+    if (update.id) {
+        delete update.id
+    }
 
-  var lion = _.findIndex(lions, {id: req.params.id});
-  if (!lions[lion]) {
-    res.send();
-  } else {
-    var updatedLion = _.assign(lions[lion], update);
-    res.json(updatedLion);
-  }
+    var lion = _.findIndex(lions, { id: req.params.id });
+    if (!lions[lion]) {
+        res.send();
+    } else {
+        var updatedLion = _.assign(lions[lion], update);
+        res.json(updatedLion);
+    }
+});
+
+app.use(function (error, req, res, next) {
+    console.log(error.message);
+    res.status(404).send({ message: "Something broke, error found" });
 });
 
 app.listen(3000);
